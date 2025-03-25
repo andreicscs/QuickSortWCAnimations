@@ -1,95 +1,120 @@
 from manim import *
+from manim import config
 
-class QuickSortCallTree(Scene):
+class EnhancedQuickSortTree(Scene):
     def construct(self):
-        # Configurazione iniziale
-        array = [5, 1, 3, 4, 2]  # Array di esempio
-        start_color = "#58C4DD"   # Colore radice
-        end_color = "#FF6B6B"     # Colore foglie
-        
-        # Genera struttura albero ricorsivo
-        root = self.create_call_tree(0, len(array)-1)
-        
-        # Crea layout albero con orientamento orizzontale
-        tree = Tree(
-            root,
-            layout={"root": ORIGIN, "child_orientation": RIGHT},
-            vertex_config={
-                "stroke_width": 2,
-                "fill_opacity": 0.7,
-                "radius": 0.4
-            },
-            edge_config={
-                "stroke_width": 2,
-                "tip_shape": ArrowTriangleFilledTip,
-                "tip_length": 0.15
+        self.camera.background_color = "#1a1a1a"
+        original_array = [1, 2, 3, 4, 5, 6, 7]
+        node_scale = 0.5  # Reduced global scaling factor
+
+        # Enhanced array visualization with better typography.
+        # The pivot is highlighted (always the last element).
+        def create_array_node(arr, pivot_index=None):
+            elements = VGroup()
+            for i, num in enumerate(arr):
+                bg_color = "#2e68cc" if i != pivot_index else "#cc302e"
+                element = VGroup(
+                    RoundedRectangle(
+                        corner_radius=0.1,
+                        height=0.6,
+                        width=0.6,
+                        fill_color=bg_color,
+                        fill_opacity=1,
+                        stroke_color=WHITE,
+                        stroke_width=1.5
+                    ),
+                    Text(str(num), font_size=22, color=WHITE)
+                )
+                elements.add(element)
+            elements.arrange(RIGHT, buff=0.15)
+            info_text = Text(f"Size: {len(arr)}", font_size=18, color="#e1e1e1").next_to(elements, DOWN, buff=0.2)
+            return VGroup(elements, info_text).scale(node_scale)
+
+        # Build the tree recursively simulating quicksort partition.
+        def build_tree(arr, depth=0):
+            if not arr:
+                return None
+            # Choose the last element as the pivot.
+            node = {
+                "viz": create_array_node(arr, pivot_index=len(arr)-1),
+                "depth": depth,
+                "children": []
             }
-        ).scale(1.2)
-        
-        # Aggiungi contenuto ai nodi
-        self.add_node_content(tree, array, start_color, end_color)
-        
-        # Animazione
-        self.play(Create(tree.vertices), run_time=2)
-        self.play(Create(tree.edges), run_time=1.5)
-        self.wait()
-        
-        # Mostra etichette con effetto cascade
-        for depth in self.get_depth_order(tree):
-            self.play(
-                *[FadeIn(v.label, shift=UP*0.3) for v in tree.vertices if v.depth == depth],
-                lag_ratio=0.3
-            )
-        self.wait(3)
+            if len(arr) > 1:
+                pivot = arr[-1]
+                # Partition (excluding pivot) into left (smaller) and right (greater).
+                left = [x for x in arr[:-1] if x < pivot]
+                right = [x for x in arr[:-1] if x > pivot]
+                node["children"] = [
+                    build_tree(left, depth+1),
+                    build_tree(right, depth+1)
+                ]
+            return node
 
-    def create_call_tree(self, start, end):
-        # Simula chiamate ricorsive del Quicksort
-        if start >= end:
-            return None
-            
-        node = {"start": start, "end": end}
-        mid = (start + end) // 2  # Per semplicità, partizione centrale
-        
-        node["left"] = self.create_call_tree(start, mid-1)
-        node["right"] = self.create_call_tree(mid+1, end)
-        return node
+        # First, build the tree.
+        root = build_tree(original_array)
 
-    def add_node_content(self, tree, array, start_color, end_color):
-        # Calcola profondità massima per gradiente colore
-        max_depth = max(v.depth for v in tree.vertices)
-        
-        for vertex in tree.vertices:
-            node = vertex.value
-            start = node["start"]
-            end = node["end"]
-            size = end - start + 1
-            
-            # Crea etichetta con informazioni
-            label = VGroup(
-                Text(f"Chiamata su: {start}-{end}", font_size=20),
-                Text(f"Elementi: {size}", font_size=16)
-            ).arrange(DOWN, center=False, aligned_edge=LEFT)
-            
-            # Aggiungi sfondo all'etichetta
-            background = RoundedRectangle(
-                width=label.width + 0.3,
-                height=label.height + 0.2,
-                corner_radius=0.1,
-                fill_color=interpolate_color(
-                    start_color,
-                    end_color,
-                    vertex.depth/max_depth
-                ),
-                fill_opacity=0.9,
-                stroke_width=1
-            )
-            label.add_to_back(background)
-            
-            # Posiziona etichetta
-            label.next_to(vertex, UP if vertex.depth%2 == 0 else DOWN, buff=0.15)
-            vertex.label = label
+        # Collect nodes layer by layer to determine max depth.
+        def collect_layers(node, depth=0, parent=None, layers=None):
+            if layers is None:
+                layers = {}
+            if depth not in layers:
+                layers[depth] = []
+            layers[depth].append((node, parent))
+            for child in node["children"]:
+                if child:
+                    collect_layers(child, depth+1, node, layers)
+            return layers
 
-    def get_depth_order(self, tree):
-        # Restituisce ordine crescente di profondità
-        depths = sorted({v.depth for v in tree.vertices})
-        return depths
+        layers = collect_layers(root)
+        max_depth = max(layers.keys())
+
+        # Compute dynamic spacing parameters (scaled down).
+        vertical_gap = config.frame_height / (max_depth + 6)  # Increased denominator for smaller gap
+        initial_dx = config.frame_width / (6 * (max_depth + 1))  # Smaller horizontal gap
+        # Place the root near the top of the screen.
+        initial_y = config.frame_height/2 - vertical_gap
+
+        # Layout the tree using computed positions, with horizontal spacing adjusted per level.
+        def layout_tree(node, x=0, y=initial_y, depth=0):
+            if not node:
+                return
+            node["viz"].move_to(RIGHT*x + UP*y)
+            current_dx = initial_dx * (max_depth - depth + 1)/(max_depth+1)
+            if node["children"]:
+                left_child, right_child = node["children"]
+                layout_tree(left_child, x - current_dx, y - vertical_gap, depth+1)
+                layout_tree(right_child, x + current_dx, y - vertical_gap, depth+1)
+
+        layout_tree(root)
+
+        # Create depth markers as a dictionary.
+        depth_markers = {
+            d: Text(f"{d}", font_size=17, color="#e1e1e1")
+                .to_edge(LEFT)
+                .shift(UP*(config.frame_height/2 - (d+1)*vertical_gap))
+            for d in range(max_depth + 1)
+        }
+
+        # Animate the tree "growing" layer by layer with corresponding depth markers.
+        self.play(FadeIn(depth_markers[0], shift=RIGHT))
+        self.play(DrawBorderThenFill(root["viz"], run_time=0.8))
+        
+        for depth in sorted(layers.keys()):
+            if depth == 0:
+                continue
+            self.play(FadeIn(depth_markers[depth], shift=RIGHT))
+            for node, parent in layers[depth]:
+                if parent is None:
+                    continue
+                arrow = Arrow(
+                    parent["viz"].get_bottom(),
+                    node["viz"].get_top(),
+                    color="#5a5a5a",
+                    stroke_width=2.5,
+                    tip_shape=ArrowCircleTip,
+                    tip_length=0.15
+                )
+                self.play(Create(arrow, run_time=1.5))
+                self.play(DrawBorderThenFill(node["viz"], run_time=0.8))
+        self.wait(2)

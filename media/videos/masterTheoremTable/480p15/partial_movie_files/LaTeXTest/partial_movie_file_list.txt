@@ -1,2 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/termi/Desktop/prova/media/videos/masterTheoremTable/480p15/partial_movie_files/LaTeXTest/1185818338_1754310298_3545472520.mp4'

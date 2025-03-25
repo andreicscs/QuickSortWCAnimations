@@ -6,11 +6,11 @@ class PerfectMorningTable(Scene):
         headers = ["Livello j", "Dimensione", "Sottoproblemi", "Operazioni"]
         rows = [
             ["0", "n", "Θ(1)", "Θ(n)"],
-            ["1", "n-1", "Θ(1)", "Θ(n-1)"],
-            ["2", "n-2", "Θ(1)", "Θ(n-2)"],
+            ["1", "n-1", "Θ(1)", "Θ(n)"],
+            ["2", "n-2", "Θ(1)", "Θ(n)"],
             ["⋮", "⋮", "⋮", "⋮"],
-            ["j", "n-j", "Θ(1)", "Θ(n-j)"],
-            ["L", "1", "Θ(1)", "Θ(1)"]
+            ["j", "n-j", "Θ(1)", "Θ(n)"],
+            ["L", "1", "Θ(1)", "Θ(n)"]
         ]
 
         # 2. CREAZIONE TABELLA (con controllo totale)

@@ -153,6 +153,9 @@ class QuicksortScene(Scene):
                 self.wait(0.5)
             
             current_value = int(self.main_group[j][1].text)
+            comparison = Text(f"{current_value} <= {pivot_value} ?", font_size=20).next_to(self.main_group, DOWN*2)
+            self.play(Write(comparison))
+            
             if current_value < pivot_value:
                 prev_i = i
                 i += 1
@@ -175,7 +178,8 @@ class QuicksortScene(Scene):
                     self.play(Transform(self.step_text, new_step), run_time=0.1)
                     self.arr[i], self.arr[j] = self.arr[j], self.arr[i]
                     self.swap_elements(i, j)
-                    
+            
+            self.play(FadeOut(comparison), run_time=0.5)
 
         if pivot_label:
             self.play(
@@ -190,13 +194,23 @@ class QuicksortScene(Scene):
             )
 
         if i+1 != high:
+            orange_pos = self.main_group[high].get_corner(UL) + RIGHT*0.07 + DOWN*0.07
+            self.play(
+                self.orange_dot.animate.move_to(orange_pos).set_opacity(1),
+                run_time=0.5
+            )
+            current_value = int(self.main_group[j+1][1].text)
+            comparison = Text(f"{current_value} <= {pivot_value} ?", font_size=20).next_to(self.main_group, DOWN*2)
+            self.play(Write(comparison))
+
             self.play(self.orange_dot.animate.set_opacity(0), self.yellow_dot.animate.set_opacity(0), run_time=0.3)
             self.arr[i+1], self.arr[high] = self.arr[high], self.arr[i+1]
             self.step_counter += 1
             new_step = Text(f"Step: {self.step_counter}", font_size=24).to_edge(UP+RIGHT)
             self.play(Transform(self.step_text, new_step), run_time=0.1)
             self.swap_elements(i+1, high)
-            
+            self.play(FadeOut(comparison), run_time=0.5)
+
         # Final cleanup
         self.play(
             self.main_group[i+1][0].animate.set_fill(GREEN, opacity=0.7),
