@@ -2,7 +2,7 @@ from manim import *
 
 class QuicksortScene(Scene):
     def construct(self):
-        self.arr = [5, 2, 9, 3, 7, 1, 8, 6, 10, 11, 4]
+        self.arr = [1, 2, 3, 4, 5, 6, 7]
         self.step_counter = 0
         
         self.main_group = self.create_array(self.arr, depth=0)
@@ -130,15 +130,13 @@ class QuicksortScene(Scene):
             new_step = Text(f"Step: {self.step_counter}", font_size=24).to_edge(UP+RIGHT)
             self.play(Transform(self.step_text, new_step), run_time=0.1)
             
-            # Update orange dot (current j) - always visible during iteration
             orange_pos = self.main_group[j].get_corner(UL) + RIGHT*0.07 + DOWN*0.07
             self.play(
                 self.orange_dot.animate.move_to(orange_pos).set_opacity(1),
                 run_time=0.5
             )
             
-            # Update yellow dot (current i) - persistent visibility
-            # Fixed version:
+
             yellow_anim = []
             if i >= low:
                 yellow_pos = self.main_group[i].get_corner(DL) + RIGHT*0.07 + UP*0.07
@@ -160,7 +158,6 @@ class QuicksortScene(Scene):
                 prev_i = i
                 i += 1
 
-                # Smooth yellow dot transition
                 if prev_i >= low and i >= low:
                     new_yellow_pos = self.main_group[i].get_corner(DL) + RIGHT*0.07 + UP*0.07
                     self.play(self.yellow_dot.animate.move_to(new_yellow_pos), run_time=0.5)
@@ -211,7 +208,6 @@ class QuicksortScene(Scene):
             self.swap_elements(i+1, high)
             self.play(FadeOut(comparison), run_time=0.5)
 
-        # Final cleanup
         self.play(
             self.main_group[i+1][0].animate.set_fill(GREEN, opacity=0.7),
             self.orange_dot.animate.set_opacity(0),
@@ -229,18 +225,17 @@ class QuicksortScene(Scene):
             "color": GREEN_B
         }
         
-        # Bottom arrow (left to right) with downward curve
         arrow1 = CurvedArrow(
-            self.main_group[i].get_center() + DOWN*0.5,  # Start slightly below left element
-            self.main_group[j].get_center() + DOWN*0.5,  # End slightly below right element
+            self.main_group[i].get_center() + DOWN*0.5,
+            self.main_group[j].get_center() + DOWN*0.5, 
             angle=PI/2,
             **arrow_style
         )
         
-        # Top arrow (right to left) with upward curve
+
         arrow2 = CurvedArrow(
-            self.main_group[j].get_center() + UP*0.5,  # Start slightly above right element
-            self.main_group[i].get_center() + UP*0.5,   # End slightly above left element
+            self.main_group[j].get_center() + UP*0.5,
+            self.main_group[i].get_center() + UP*0.5,
             angle=PI/2,
             **arrow_style
         )
@@ -257,7 +252,6 @@ class QuicksortScene(Scene):
             run_time=0.7
         )
         
-        # Swap elements in VGroup
         self.main_group[i], self.main_group[j] = self.main_group[j], self.main_group[i]
         self.play(
             FadeOut(arrow1), 
